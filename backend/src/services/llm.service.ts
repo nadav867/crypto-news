@@ -4,9 +4,11 @@ import { NewsArticle } from "../interfaces/news.interface";
 
 @Injectable()
 export class LlmService {
-  private readonly apiUrl = "https://api-inference.huggingface.co/models";
-  private readonly model = "mistralai/Mistral-7B-Instruct-v0.2"; // Free model
-  private readonly apiKey = process.env.HUGGINGFACE_API_KEY || "";
+  private readonly apiUrl = "https://router.huggingface.co/hf-inference/models";
+  private readonly model =
+    "shorecode/t5-efficient-tiny-summarizer-general-purpose-v3"; // Free model
+  private readonly apiKey =
+    process.env.HUGGINGFACE_API_KEY || "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";
 
   async *generateAnswer(
     question: string,
@@ -52,12 +54,14 @@ Answer:`;
         {
           headers: {
             "Content-Type": "application/json",
-            ...(this.apiKey && { Authorization: `Bearer ${this.apiKey}` }),
+            Authorization: `Bearer ${this.apiKey}`,
           },
           responseType: "json",
           timeout: 60000, // 60 second timeout
         }
       );
+
+      console.log("Response:", response.data);
 
       // Handle different response formats from Hugging Face
       let generatedText = "";
@@ -91,6 +95,11 @@ Answer:`;
         yield "The AI model is currently loading. Please wait a moment and try again.";
       } else if (error.response?.status === 429) {
         yield "Rate limit exceeded. Please wait a moment and try again.";
+      } else if (
+        error.response?.status === 400 &&
+        error.response?.data?.error?.includes("paused")
+      ) {
+        yield "The AI model is currently paused. Please try again later or contact support.";
       } else {
         yield "I apologize, but I encountered an error while generating the answer. Please try again.";
       }

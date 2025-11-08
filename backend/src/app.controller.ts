@@ -56,6 +56,8 @@ export class AppController {
           5
         );
 
+      console.log("Relevant metadata:", relevantMetadata);
+
       console.log(`Found ${relevantMetadata.length} relevant articles`);
 
       if (relevantMetadata.length === 0) {

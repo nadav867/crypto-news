@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import axios from 'axios';
+import { Injectable } from "@nestjs/common";
+import axios from "axios";
 
 interface ArticleMetadata {
   id: string;
@@ -13,9 +13,10 @@ interface ArticleMetadata {
 
 @Injectable()
 export class SearchService {
-  private readonly apiUrl = 'https://api-inference.huggingface.co/models';
-  private readonly embeddingModel = 'sentence-transformers/all-MiniLM-L6-v2'; // Free embedding model
-  private readonly apiKey = process.env.HUGGINGFACE_API_KEY || '';
+  private readonly apiUrl = "https://router.huggingface.co/hf-inference/models";
+  private readonly embeddingModel = "sentence-transformers/all-MiniLM-L6-v2"; // Free embedding model
+  private readonly apiKey =
+    process.env.HUGGINGFACE_API_KEY || "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";
 
   /**
    * Find relevant articles based on metadata (title + description)
@@ -24,7 +25,7 @@ export class SearchService {
   async findRelevantArticlesMetadata(
     query: string,
     articles: ArticleMetadata[],
-    limit: number = 5,
+    limit: number = 5
   ): Promise<ArticleMetadata[]> {
     try {
       // Get embeddings for query
@@ -37,10 +38,10 @@ export class SearchService {
           const articleEmbedding = await this.getEmbedding(articleText);
           const similarity = this.cosineSimilarity(
             queryEmbedding,
-            articleEmbedding,
+            articleEmbedding
           );
           return { article, similarity };
-        }),
+        })
       );
 
       // Sort by similarity and return top results
@@ -49,7 +50,7 @@ export class SearchService {
         .slice(0, limit)
         .map((item) => item.article);
     } catch (error) {
-      console.error('Search error:', error);
+      console.error("Search error:", error);
       // Fallback: simple keyword-based search on metadata
       return this.keywordSearchMetadata(query, articles, limit);
     }
@@ -57,27 +58,36 @@ export class SearchService {
 
   private async getEmbedding(text: string): Promise<number[]> {
     try {
+      // Use router endpoint for embeddings - send inputs as array
       const response = await axios.post(
         `${this.apiUrl}/${this.embeddingModel}`,
-        { inputs: text },
+        { inputs: [text] },
         {
           headers: {
-            'Content-Type': 'application/json',
-            ...(this.apiKey && { Authorization: `Bearer ${this.apiKey}` }),
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
           },
-        },
+        }
       );
 
       // Handle different response formats
       if (Array.isArray(response.data)) {
+        // If response is array of arrays, return first embedding
+        if (Array.isArray(response.data[0])) {
+          return response.data[0];
+        }
         return response.data[0];
+      }
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
       }
       if (response.data.embeddings) {
         return response.data.embeddings[0];
       }
       return response.data;
-    } catch (error) {
-      console.error('Embedding error:', error);
+    } catch (error: any) {
+      // If router fails, try fallback to keyword search
+      console.error("Embedding error:", error.response?.data || error.message);
       throw error;
     }
   }
@@ -85,7 +95,7 @@ export class SearchService {
   private keywordSearchMetadata(
     query: string,
     articles: ArticleMetadata[],
-    limit: number,
+    limit: number
   ): ArticleMetadata[] {
     const queryLower = query.toLowerCase();
     const queryWords = queryLower.split(/\s+/);
@@ -97,7 +107,7 @@ export class SearchService {
       for (const word of queryWords) {
         if (word.length > 2) {
           // Count occurrences
-          const regex = new RegExp(word, 'gi');
+          const regex = new RegExp(word, "gi");
           const matches = text.match(regex);
           score += matches ? matches.length : 0;
         }
@@ -129,4 +139,3 @@ export class SearchService {
     return denominator === 0 ? 0 : dotProduct / denominator;
   }
 }
-
