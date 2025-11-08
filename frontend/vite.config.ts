@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/ask": {
-        target: "http://localhost:3001", // Changed from 3000
+        target: "http://localhost:3001",
         changeOrigin: true,
         ws: true,
       },

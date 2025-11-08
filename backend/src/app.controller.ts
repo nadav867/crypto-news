@@ -5,6 +5,7 @@ import { ModerationService } from "./services/moderation.service";
 import { NewsService } from "./services/news.service";
 import { SearchService } from "./services/search.service";
 import { LlmService } from "./services/llm.service";
+import { setSSEHeaders } from "./utils/sse-headers.util";
 
 @Controller()
 export class AppController {
@@ -26,7 +27,6 @@ export class AppController {
       return;
     }
 
-    // Check moderation
     const isOffensive = await this.moderationService.isOffensive(question);
     if (isOffensive) {
       res.status(HttpStatus.BAD_REQUEST).json({
@@ -35,28 +35,19 @@ export class AppController {
       return;
     }
 
-    // Set up SSE headers
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    setSSEHeaders(res);
 
     try {
-      // Step 1: Fetch lightweight metadata from RSS feeds (fast, no crawling)
       await this.newsService.ensureMetadataFetched();
 
-      // Step 2: Get article metadata for semantic search
       const articleMetadata = this.newsService.getArticleMetadata();
 
-      // Step 3: Find relevant articles using semantic search on metadata
       const relevantMetadata =
         await this.searchService.findRelevantArticlesMetadata(
           question,
           articleMetadata,
           5
         );
-
-      // console.log("Relevant metadata:", relevantMetadata);
 
       console.log(`Found ${relevantMetadata.length} relevant articles`);
 
@@ -68,12 +59,10 @@ export class AppController {
         return;
       }
 
-      // Step 4: Only now crawl full content for relevant articles
       console.log("Crawling full content for relevant articles...");
       const relevantArticles =
         await this.newsService.fetchArticlesContent(relevantMetadata);
 
-      // Step 5: Generate answer using LLM with full article content
       for await (const chunk of this.llmService.generateAnswer(
         question,
         relevantArticles
