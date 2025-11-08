@@ -65,26 +65,26 @@ cd ..
 
 5. **Start both servers** (from project root):
 
-**Option A: Run both together** (requires `&` or use two terminals):
+Simply run:
 
 ```bash
-npm run dev:backend
-# In another terminal:
-npm run dev:frontend
+npm run dev
 ```
 
-**Option B: Run individually**:
-
-```bash
-# Backend (Terminal 1)
-npm run dev:backend
-
-# Frontend (Terminal 2)
-npm run dev:frontend
-```
+This will start both the backend and frontend servers simultaneously.
 
 The backend will start on `http://localhost:3001` and begin fetching news articles.
 The frontend will start on `http://localhost:5173`
+
+**Alternative:** If you prefer to run them separately:
+
+```bash
+# Terminal 1 - Backend
+npm run dev:backend
+
+# Terminal 2 - Frontend
+npm run dev:frontend
+```
 
 ### Alternative: Separate Setup
 
