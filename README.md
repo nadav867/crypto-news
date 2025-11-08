@@ -32,7 +32,6 @@ An LLM-powered web application that understands user questions and provides real
 ### Prerequisites
 
 - Node.js 18+ and npm
-- (Optional) Hugging Face API key for faster responses (works without it too!)
 
 ### Quick Start (Recommended - Single node_modules)
 
@@ -105,7 +104,7 @@ npm run dev
 
 1. Open `http://localhost:5173` in your browser
 2. Type a question about cryptocurrency news in the input field
-3. Click "Ask" to get a real-time streaming answer based on the latest news articles
+3. Click "Send" to get a real-time streaming answer based on the latest news articles
 
 ## API Endpoint
 
