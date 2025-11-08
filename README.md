@@ -45,18 +45,25 @@ npm install
 
 This will install dependencies for both backend and frontend in a single `node_modules` folder.
 
-2. **Create backend `.env` file** (optional - works without API key too):
+2. **Create backend `.env` file** (required):
 
 ```bash
 cd backend
 echo "PORT=3001
-HUGGINGFACE_API_KEY=" > .env
+HUGGINGFACE_API_KEY=your_api_key_here" > .env
 cd ..
 ```
 
-**Note:** The Hugging Face API key is optional. Without it, the API will work but may have rate limits. Get a free API key at [huggingface.co](https://huggingface.co/settings/tokens) if you want faster responses.
+**Important:** You **must** add your Hugging Face API key to the `.env` file. The application will not start without it.
 
-3. **Start both servers** (from project root):
+**How to get a free Hugging Face API key:**
+
+1. Go to [huggingface.co](https://huggingface.co) and create a free account (if you don't have one)
+2. Navigate to [Settings > Access Tokens](https://huggingface.co/settings/tokens)
+3. Click "New token" and create a token with "Read" permissions
+4. Copy the token and paste it into your `.env` file as `HUGGINGFACE_API_KEY=your_token_here`
+
+5. **Start both servers** (from project root):
 
 **Option A: Run both together** (requires `&` or use two terminals):
 
@@ -88,7 +95,9 @@ If you prefer separate `node_modules` folders:
 ```bash
 cd backend
 npm install
-# Create .env file
+# Create .env file with HUGGINGFACE_API_KEY (required)
+echo "PORT=3001
+HUGGINGFACE_API_KEY=your_api_key_here" > .env
 npm run start:dev
 ```
 

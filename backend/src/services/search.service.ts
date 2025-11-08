@@ -6,11 +6,7 @@ import { ArticleMetadata } from "../interfaces/article-metadata.interface";
 
 @Injectable()
 export class SearchService {
-  private readonly hfApi: HuggingFaceApi;
-
-  constructor() {
-    this.hfApi = new HuggingFaceApi();
-  }
+  constructor(private readonly hfApi: HuggingFaceApi) {}
 
   async findRelevantArticlesMetadata(
     query: string,

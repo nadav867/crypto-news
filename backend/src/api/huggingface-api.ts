@@ -1,13 +1,19 @@
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { InferenceClient } from "@huggingface/inference";
 import { parseEmbeddingResponse } from "../utils/embedding-response-parser.util";
 
+@Injectable()
 export class HuggingFaceApi {
   private readonly hf: InferenceClient;
 
-  constructor() {
-    const apiKey =
-      process.env.HUGGINGFACE_API_KEY ||
-      "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";
+  constructor(private configService: ConfigService) {
+    const apiKey = this.configService.get<string>("HUGGINGFACE_API_KEY");
+    if (!apiKey) {
+      throw new Error(
+        "HUGGINGFACE_API_KEY is not configured. Please set it in your .env file."
+      );
+    }
     this.hf = new InferenceClient(apiKey);
   }
 

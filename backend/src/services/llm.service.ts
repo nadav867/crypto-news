@@ -6,11 +6,7 @@ import { NewsArticle } from "../interfaces/news.interface";
 
 @Injectable()
 export class LlmService {
-  private readonly hfApi: HuggingFaceApi;
-
-  constructor() {
-    this.hfApi = new HuggingFaceApi();
-  }
+  constructor(private readonly hfApi: HuggingFaceApi) {}
 
   async *generateAnswer(
     question: string,
