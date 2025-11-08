@@ -5,12 +5,11 @@ import { NewsArticle } from "../interfaces/news.interface";
 @Injectable()
 export class LlmService {
   private readonly hf: InferenceClient;
-  private readonly model = "google/medgemma-27b-text-it";
+  private readonly model = "google/medgemma-27b-text-it"; // Simple free model - commonly available
   constructor() {
     const apiKey =
       process.env.HUGGINGFACE_API_KEY ||
       "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";
-    // Use router endpoint as required - include /models path
     this.hf = new InferenceClient(apiKey);
   }
 
@@ -41,33 +40,22 @@ export class LlmService {
 
                     Answer:`;
 
-    // console.log("Prompt:", prompt);
-
     try {
-      const response = await this.hf.textGeneration({
-        model: this.model,
-        inputs: prompt,
+      // Use textGeneration for gpt2 (not conversational)
+      const response = await this.hf.chatCompletion({
+        model: "mistralai/Mistral-7B-Instruct-v0.2",
+        provider: "featherless-ai",
+        messages: [{ role: "user", content: prompt }],
+        // Add other necessary parameters (e.g., max_new_tokens)
         parameters: {
-          max_new_tokens: 512,
-          temperature: 0.7,
-          return_full_text: false,
-        },
-        options: {
-          wait_for_model: true,
+          max_new_tokens: 512, // A good default to limit cost/latency
         },
       });
 
-      // console.log("Response:", response);
+      console.log("Response:", response.choices[0].message.content);
 
       // Handle response from Hugging Face library
-      let generatedText = "";
-      if (typeof response === "string") {
-        generatedText = response;
-      } else if (response.generated_text) {
-        generatedText = response.generated_text;
-      } else if (Array.isArray(response) && response[0]) {
-        generatedText = response[0].generated_text || "";
-      }
+      let generatedText = response.choices[0].message.content || "";
 
       if (!generatedText) {
         yield "I apologize, but I could not generate a response. Please try again.";
@@ -85,6 +73,15 @@ export class LlmService {
       }
     } catch (error: any) {
       console.error("LLM error:", error);
+      console.error("LLM error details:", {
+        message: error?.message,
+        status: error?.status,
+        responseStatus: error?.response?.status,
+        responseData: error?.response?.data,
+        httpRequest: error?.httpRequest,
+        httpResponse: error?.httpResponse,
+        errorBody: error?.httpResponse?.body,
+      });
 
       // Handle specific Hugging Face errors
       const errorMessage =
@@ -102,6 +99,16 @@ export class LlmService {
         errorMessage?.includes("no longer supported")
       ) {
         yield "The API endpoint has changed. Please contact support.";
+      } else if (
+        errorMessage?.includes("No Inference Provider") ||
+        errorMessage?.includes("inference provider")
+      ) {
+        yield "The selected AI model is not available. Please try a different model or contact support.";
+      } else if (
+        errorMessage?.includes("not supported by any provider") ||
+        error?.httpResponse?.body?.error?.code === "model_not_supported"
+      ) {
+        yield "The selected AI model is not supported by your enabled providers. Please enable providers in your Hugging Face account settings or try a different model.";
       } else {
         yield "I apologize, but I encountered an error while generating the answer. Please try again.";
       }

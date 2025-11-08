@@ -19,7 +19,6 @@ export class SearchService {
     const apiKey =
       process.env.HUGGINGFACE_API_KEY ||
       "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";
-    // Use router endpoint as required - include /models path
     this.hf = new InferenceClient(apiKey);
   }
 
@@ -87,6 +86,14 @@ export class SearchService {
     } catch (error: any) {
       // If router fails, try fallback to keyword search
       console.error("Embedding error:", error.response?.data || error.message);
+      console.error("Embedding error details:", {
+        message: error?.message,
+        status: error?.status,
+        responseStatus: error?.response?.status,
+        responseData: error?.response?.data,
+        httpRequest: error?.httpRequest,
+        httpResponse: error?.httpResponse,
+      });
       throw error;
     }
   }
