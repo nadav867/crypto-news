@@ -1,4 +1,4 @@
-import { StreamMessage } from "./types";
+import { StreamMessage } from "../types";
 
 export async function* parseSSEStream(
   reader: ReadableStreamDefaultReader<Uint8Array>
@@ -27,4 +27,3 @@ export async function* parseSSEStream(
     }
   }
 }
-

@@ -1,5 +1,5 @@
-import { parseSSEStream } from "../utils/sse-parser.util";
-import { StreamMessage } from "../utils/types";
+import { StreamMessage } from "../types";
+import { parseSSEStream } from "../utils/sse-parser";
 
 export async function* askQuestion(
   question: string
@@ -19,4 +19,3 @@ export async function* askQuestion(
 
   yield* parseSSEStream(reader);
 }
-

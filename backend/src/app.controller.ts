@@ -67,7 +67,6 @@ export class AppController {
         question,
         relevantArticles
       )) {
-        console.log("Chunk:", chunk);
         res.write(
           `data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`
         );

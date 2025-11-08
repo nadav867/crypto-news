@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
 import { askQuestion } from "../api/ask-api";
-import { ChatMessage, StreamMessage } from "../utils/types";
+import { ChatMessage } from "../types";
 
 const AskQuestion: React.FC = () => {
   const [question, setQuestion] = useState("");
