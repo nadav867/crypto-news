@@ -56,7 +56,7 @@ export class AppController {
           5
         );
 
-      console.log("Relevant metadata:", relevantMetadata);
+      // console.log("Relevant metadata:", relevantMetadata);
 
       console.log(`Found ${relevantMetadata.length} relevant articles`);
 
@@ -78,6 +78,7 @@ export class AppController {
         question,
         relevantArticles
       )) {
+        console.log("Chunk:", chunk);
         res.write(
           `data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`
         );

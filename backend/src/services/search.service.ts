@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import axios from "axios";
+import { InferenceClient } from "@huggingface/inference";
 
 interface ArticleMetadata {
   id: string;
@@ -13,10 +13,15 @@ interface ArticleMetadata {
 
 @Injectable()
 export class SearchService {
-  private readonly apiUrl = "https://router.huggingface.co/hf-inference/models";
-  private readonly embeddingModel = "sentence-transformers/all-MiniLM-L6-v2"; // Free embedding model
-  private readonly apiKey =
-    process.env.HUGGINGFACE_API_KEY || "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";
+  private readonly hf: InferenceClient;
+
+  constructor() {
+    const apiKey =
+      process.env.HUGGINGFACE_API_KEY ||
+      "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";
+    // Use router endpoint as required - include /models path
+    this.hf = new InferenceClient(apiKey);
+  }
 
   /**
    * Find relevant articles based on metadata (title + description)
@@ -58,33 +63,27 @@ export class SearchService {
 
   private async getEmbedding(text: string): Promise<number[]> {
     try {
-      // Use router endpoint for embeddings - send inputs as array
-      const response = await axios.post(
-        `${this.apiUrl}/${this.embeddingModel}`,
-        { inputs: [text] },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-        }
-      );
-
-      // Handle different response formats
-      if (Array.isArray(response.data)) {
+      // Use Hugging Face library for embeddings
+      const response = await this.hf.featureExtraction({
+        // 💡 You MUST explicitly set a stable model for Feature Extraction
+        model: "BAAI/bge-small-en-v1.5",
+        inputs: text,
+      });
+      // Handle response from Hugging Face library
+      if (Array.isArray(response)) {
         // If response is array of arrays, return first embedding
-        if (Array.isArray(response.data[0])) {
-          return response.data[0];
+        if (Array.isArray(response[0])) {
+          return response[0] as number[];
         }
-        return response.data[0];
+        // If response is array of numbers, return as is
+        if (typeof response[0] === "number") {
+          return response as number[];
+        }
+        // Otherwise return first element as array
+        return response[0] as unknown as number[];
       }
-      if (response.data && Array.isArray(response.data)) {
-        return response.data;
-      }
-      if (response.data.embeddings) {
-        return response.data.embeddings[0];
-      }
-      return response.data;
+      // If response is a single array/number array, return it
+      return response as unknown as number[];
     } catch (error: any) {
       // If router fails, try fallback to keyword search
       console.error("Embedding error:", error.response?.data || error.message);

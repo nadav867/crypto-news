@@ -21,19 +21,9 @@ export class NewsService {
   private parser: Parser;
   private readonly sources: NewsSource[] = [
     {
-      name: "DL News",
-      rssUrl: "https://www.dlnews.com/feed/",
-      baseUrl: "https://www.dlnews.com",
-    },
-    {
       name: "The Defiant",
       rssUrl: "https://thedefiant.io/feed",
       baseUrl: "https://thedefiant.io",
-    },
-    {
-      name: "Cointelegraph",
-      rssUrl: "https://cointelegraph.com/rss",
-      baseUrl: "https://cointelegraph.com",
     },
   ];
   private readonly METADATA_CACHE_DURATION = 1800000; // 30 minutes

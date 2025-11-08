@@ -1,14 +1,18 @@
 import { Injectable } from "@nestjs/common";
-import axios from "axios";
+import { InferenceClient } from "@huggingface/inference";
 import { NewsArticle } from "../interfaces/news.interface";
 
 @Injectable()
 export class LlmService {
-  private readonly apiUrl = "https://router.huggingface.co/hf-inference/models";
-  private readonly model =
-    "shorecode/t5-efficient-tiny-summarizer-general-purpose-v3"; // Free model
-  private readonly apiKey =
-    process.env.HUGGINGFACE_API_KEY || "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";
+  private readonly hf: InferenceClient;
+  private readonly model = "google/medgemma-27b-text-it";
+  constructor() {
+    const apiKey =
+      process.env.HUGGINGFACE_API_KEY ||
+      "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";
+    // Use router endpoint as required - include /models path
+    this.hf = new InferenceClient(apiKey);
+  }
 
   async *generateAnswer(
     question: string,
@@ -26,51 +30,43 @@ export class LlmService {
       .join("\n\n");
 
     const prompt = `You are a helpful AI crypto journalist. Answer the user's question based on the provided news articles. 
-Be accurate, cite sources when possible, and if the articles don't contain enough information, say so.
-Format your response naturally and conversationally.
+                    Be accurate, cite sources when possible, and if the articles don't contain enough information, say so.
+                    Format your response naturally and conversationally.
 
-Context from recent crypto news:
+                    Context from recent crypto news:
 
-${context}
+                    ${context}
 
-Question: ${question}
+                    Question: ${question}
 
-Answer:`;
+                    Answer:`;
+
+    // console.log("Prompt:", prompt);
 
     try {
-      const response = await axios.post(
-        `${this.apiUrl}/${this.model}`,
-        {
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: 512,
-            temperature: 0.7,
-            return_full_text: false,
-          },
-          options: {
-            wait_for_model: true,
-          },
+      const response = await this.hf.textGeneration({
+        model: this.model,
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 512,
+          temperature: 0.7,
+          return_full_text: false,
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          responseType: "json",
-          timeout: 60000, // 60 second timeout
-        }
-      );
+        options: {
+          wait_for_model: true,
+        },
+      });
 
-      console.log("Response:", response.data);
+      // console.log("Response:", response);
 
-      // Handle different response formats from Hugging Face
+      // Handle response from Hugging Face library
       let generatedText = "";
-      if (Array.isArray(response.data) && response.data[0]) {
-        generatedText = response.data[0].generated_text || "";
-      } else if (response.data.generated_text) {
-        generatedText = response.data.generated_text;
-      } else if (typeof response.data === "string") {
-        generatedText = response.data;
+      if (typeof response === "string") {
+        generatedText = response;
+      } else if (response.generated_text) {
+        generatedText = response.generated_text;
+      } else if (Array.isArray(response) && response[0]) {
+        generatedText = response[0].generated_text || "";
       }
 
       if (!generatedText) {
@@ -88,18 +84,24 @@ Answer:`;
         }
       }
     } catch (error: any) {
-      console.error("LLM error:", error.response?.data || error.message);
+      console.error("LLM error:", error);
 
       // Handle specific Hugging Face errors
-      if (error.response?.status === 503) {
+      const errorMessage =
+        error?.message || error?.response?.data?.error || String(error);
+      const statusCode = error?.response?.status || error?.status;
+
+      if (statusCode === 503 || errorMessage?.includes("loading")) {
         yield "The AI model is currently loading. Please wait a moment and try again.";
-      } else if (error.response?.status === 429) {
+      } else if (statusCode === 429 || errorMessage?.includes("rate limit")) {
         yield "Rate limit exceeded. Please wait a moment and try again.";
-      } else if (
-        error.response?.status === 400 &&
-        error.response?.data?.error?.includes("paused")
-      ) {
+      } else if (statusCode === 400 && errorMessage?.includes("paused")) {
         yield "The AI model is currently paused. Please try again later or contact support.";
+      } else if (
+        statusCode === 410 ||
+        errorMessage?.includes("no longer supported")
+      ) {
+        yield "The API endpoint has changed. Please contact support.";
       } else {
         yield "I apologize, but I encountered an error while generating the answer. Please try again.";
       }
