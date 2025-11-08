@@ -7,7 +7,7 @@ export class HuggingFaceApi {
   constructor() {
     const apiKey =
       process.env.HUGGINGFACE_API_KEY ||
-      "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";
+      "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";
     this.hf = new InferenceClient(apiKey);
   }
 
@@ -46,4 +46,3 @@ export class HuggingFaceApi {
     return response.choices[0].message.content || "";
   }
 }
-
